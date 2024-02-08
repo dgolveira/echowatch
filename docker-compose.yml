@@ -1,0 +1,68 @@
+version: '3.9'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+    container_name: echowatch_elasticsearch
+    hostname: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      echowatch:
+        ipv4_address: 172.18.0.2
+    expose:
+      - "9200"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.11.2
+    container_name: echowatch_logstash
+    hostname: logstash
+    volumes:
+      - logstash-pipeline:/usr/share/logstash/pipeline
+    networks:
+      echowatch:
+        ipv4_address: 172.18.0.3
+    expose:
+      - "5044"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.11.2
+    container_name: echowatch_kibana
+    hostname: kibana
+    networks:
+      echowatch:
+        ipv4_address: 172.18.0.4
+    expose:
+      - "5601"
+    depends_on:
+      - elasticsearch
+
+  openvpn:
+    image: kylemanna/openvpn
+    container_name: echowatch_openvpn
+    hostname: openvpn
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./openvpn-data:/etc/openvpn
+    ports:
+      - 1194:1194/udp
+    networks:
+      echowatch:
+        ipv4_address: 172.18.0.5
+    restart: unless-stopped
+
+networks:
+  echowatch:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.18.0.0/16
+
+volumes:
+  elasticsearch-data:
+  logstash-pipeline:

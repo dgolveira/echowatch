@@ -1,0 +1,5 @@
+*ovpn
+openvpn-data/
+*.pem
+prep.sh
+kibana.htpasswd
